@@ -40,7 +40,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends Activity {
-    private final int bg = Color.rgb(12, 17, 28), panel = Color.rgb(23, 33, 48), accent = Color.rgb(55, 211, 181);
+    private final int bg = Color.rgb(2, 9, 8), panel = Color.rgb(8, 29, 23), accent = Color.rgb(40, 255, 132);
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Map<String, JSONObject> observations = new LinkedHashMap<>();
     private LinearLayout root, results;
@@ -90,25 +90,27 @@ public class MainActivity extends Activity {
     }
     private Button button(String s, View.OnClickListener action) {
         Button b = new Button(this); b.setText(s); b.setAllCaps(false); b.setTextColor(Color.WHITE);
-        b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(34, 111, 112)));
+        b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(8, 83, 49)));
         b.setOnClickListener(action); return b;
     }
     private void buildUi() {
         ScrollView sc = new ScrollView(this); sc.setFillViewport(true); sc.setBackgroundColor(bg);
-        root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(20, 20, 20, 24);
+        root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(24, 28, 24, 32);
         sc.addView(root); setContentView(sc);
-        root.addView(text("◉ RF COMMAND CENTER", 24, accent, true));
-        root.addView(text("Local-only wireless & BLE assessment  •  v3.0", 13, 0xffafc4d3, false));
+        root.addView(text("◉  RF COMMAND CENTER", 25, accent, true));
+        root.addView(text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━", 14, accent, false));
+        root.addView(text("MATRIX / WIRELESS INTELLIGENCE  •  v4.0", 13, 0xffafc4d3, false));
         status = text("", 13, Color.WHITE, false); root.addView(status);
         stats = text("0 observations", 15, accent, true); root.addView(stats);
-        root.addView(button("Open V3 Scoped Vulnerability Assessment", v -> startActivity(new Intent(this, VulnerabilityActivity.class))));
-        root.addView(button("Open V2 BLE GATT Inspector", v -> startActivity(new Intent(this, AssessmentActivity.class))));
-        root.addView(button("1  Scan nearby Wi-Fi", v -> scanWifi()));
-        root.addView(button("2  Start BLE scan (12 seconds)", v -> startBle()));
-        root.addView(button("3  Stop BLE scan", v -> stopBle()));
+        root.addView(text("▣  OPERATIONS", 17, accent, true));
+        root.addView(button("▸  V3 SCOPED VULNERABILITY ASSESSMENT", v -> startActivity(new Intent(this, VulnerabilityActivity.class))));
+        root.addView(button("▸  BLE GATT / ACCESS-CONTROL INSPECTOR", v -> startActivity(new Intent(this, AssessmentActivity.class))));
+        root.addView(button("▸  WI-FI NETWORK INTELLIGENCE", v -> scanWifi()));
+        root.addView(button("▸  BLE DISCOVERY + RISK INDICATORS", v -> startBle()));
+        root.addView(button("■  STOP BLE SCAN", v -> stopBle()));
         root.addView(button("Export observations as JSON", v -> exportJson()));
         root.addView(button("Clear observations", v -> { observations.clear(); renderObservations(); updateStatus("Observations cleared"); }));
-        root.addView(text("OBSERVED DEVICES", 17, Color.WHITE, true));
+        root.addView(text("▣  RF DEVICE TELEMETRY", 17, accent, true));
         results = new LinearLayout(this); results.setOrientation(LinearLayout.VERTICAL); root.addView(results);
         root.addView(text("Wi-Fi scans depend on Android location services and OS throttling. BLE devices nearby may not disclose names and may rotate identifiers. For authorized assessment and inventory only.", 12, 0xffa9b5c6, false));
         renderObservations();
@@ -187,16 +189,24 @@ public class MainActivity extends Activity {
         Collections.sort(items, (a, c) -> Integer.compare(c.optInt("rssi", -200), a.optInt("rssi", -200)));
         for (JSONObject e : items) {
             LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.VERTICAL);
-            row.setPadding(14, 10, 14, 10); row.setBackgroundColor(panel);
+            row.setPadding(16, 13, 16, 13); row.setBackgroundColor(panel);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2); lp.bottomMargin = 7;
             results.addView(row, lp);
             row.addView(text(e.optString("type") + "  •  " + e.optString("name"), 15, Color.WHITE, true));
             row.addView(text(e.optString("identifier") + "   •   " + e.optInt("rssi") + " dBm", 12, accent, false));
+            if ("BLE".equals(e.optString("type"))) row.addView(text(bleRisk(e), 11, 0xffffcf80, false));
             if (e.has("security_advertisement")) row.addView(text(e.optString("security_advertisement") + "  •  " + e.optInt("frequency_mhz") + " MHz", 11, 0xffb6c4d4, false));
             if (e.has("assessment")) row.addView(text(e.optString("assessment"), 11, 0xffffd18c, false));
             if (e.has("service_uuids")) row.addView(text("Advertised services: " + e.optString("service_uuids"), 11, 0xffb6c4d4, false));
         }
         if (items.isEmpty()) results.addView(text("No observations yet. Select Wi-Fi or BLE scan above.", 14, 0xffb6c4d4, false));
+    }
+    private String bleRisk(JSONObject e) {
+        String name=e.optString("name","");
+        String services=e.optString("service_uuids","");
+        if (name.isEmpty() || name.equals("Unnamed BLE device")) return "UNKNOWN: Unnamed advertisement; vulnerability cannot be determined";
+        if (!services.isEmpty()) return "INFO: Advertised service UUIDs available; inspect only authorized peripherals";
+        return "INFO: Device detected; no vulnerability confirmed";
     }
     private String classifyWifi(String caps) {
         if (caps == null) return "Unknown security";
