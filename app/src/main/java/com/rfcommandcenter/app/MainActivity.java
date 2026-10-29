@@ -98,9 +98,10 @@ public class MainActivity extends Activity {
         root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(20, 20, 20, 24);
         sc.addView(root); setContentView(sc);
         root.addView(text("◉ RF COMMAND CENTER", 24, accent, true));
-        root.addView(text("Local-only wireless & BLE assessment  •  v2.0", 13, 0xffafc4d3, false));
+        root.addView(text("Local-only wireless & BLE assessment  •  v3.0", 13, 0xffafc4d3, false));
         status = text("", 13, Color.WHITE, false); root.addView(status);
         stats = text("0 observations", 15, accent, true); root.addView(stats);
+        root.addView(button("Open V3 Scoped Vulnerability Assessment", v -> startActivity(new Intent(this, VulnerabilityActivity.class))));
         root.addView(button("Open V2 BLE GATT Inspector", v -> startActivity(new Intent(this, AssessmentActivity.class))));
         root.addView(button("1  Scan nearby Wi-Fi", v -> scanWifi()));
         root.addView(button("2  Start BLE scan (12 seconds)", v -> startBle()));
