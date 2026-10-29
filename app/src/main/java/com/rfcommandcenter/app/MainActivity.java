@@ -69,6 +69,10 @@ public class MainActivity extends Activity {
                 if (result.getScanRecord() != null && result.getScanRecord().getServiceUuids() != null)
                     entry.put("service_uuids", result.getScanRecord().getServiceUuids().toString());
                 observations.put("BLE:" + address, entry);
+                if (observations.size() > 400) {
+                    String oldest = observations.keySet().iterator().next();
+                    observations.remove(oldest);
+                }
                 if (!renderPending) {
                     renderPending = true;
                     handler.postDelayed(() -> { renderPending = false; renderObservations(); }, 550);
@@ -85,6 +89,7 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
         wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        loadHistory();
         buildUi();
         updateStatus("Ready • Scans are passive discovery only");
     }
@@ -120,7 +125,7 @@ public class MainActivity extends Activity {
         sc.addView(root);
         setContentView(sc);
         root.addView(text("◉ RF COMMAND CENTER", 25, accent, true));
-        root.addView(text("MATRIX OPERATIONS  /  V4.1", 12, 0xffa1cdb5, false));
+        root.addView(text("MATRIX OPERATIONS  /  V5.0", 12, 0xffa1cdb5, false));
         status = text("", 13, Color.WHITE, false);
         root.addView(status);
         stats = text("Wi-Fi: 0  •  BLE: 0", 18, accent, true);
@@ -139,6 +144,7 @@ public class MainActivity extends Activity {
         LinearLayout tools = section("02 / SECURITY MODULES");
         tools.addView(button("SCOPED ASSESSMENT", v -> startActivity(new Intent(this, VulnerabilityActivity.class))));
         tools.addView(button("BLE GATT INSPECTOR", v -> startActivity(new Intent(this, AssessmentActivity.class))));
+        tools.addView(button("V5 DEVICE IDENTITY + CVE RESEARCH", v -> startActivity(new Intent(this, IntelligenceActivity.class))));
 
         LinearLayout inventory = section("03 / LIVE RF INVENTORY");
         filterInput = new EditText(this);
@@ -161,6 +167,8 @@ public class MainActivity extends Activity {
             renderObservations();
         }));
         inventory.addView(button("EXPORT JSON", v -> exportJson()));
+        inventory.addView(button("SAVE SCAN SNAPSHOT", v -> saveHistory()));
+        inventory.addView(button("LOAD LAST SNAPSHOT", v -> loadSnapshot()));
         inventory.addView(button("CLEAR SESSION", v -> {
             observations.clear();
             renderObservations();
@@ -205,6 +213,7 @@ public class MainActivity extends Activity {
                 e.put("assessment", classifyWifi(scan.capabilities));
                 e.put("timestamp", dateFormat.format(new Date()));
                 observations.put("Wi-Fi:" + scan.BSSID, e);
+                if (observations.size() > 400) observations.remove(observations.keySet().iterator().next());
             }
             updateStatus("Latest Wi-Fi results: " + scans.size() + " access points (may be cached)");
             renderObservations();
@@ -255,6 +264,7 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2); lp.bottomMargin = 7;
             results.addView(row, lp);
             row.addView(text(e.optString("type") + "  •  " + e.optString("name"), 15, Color.WHITE, true));
+            row.setOnClickListener(v -> showDeviceDetail(e));
             row.addView(text(e.optString("identifier") + "   •   " + e.optInt("rssi") + " dBm", 12, accent, false));
             if ("BLE".equals(e.optString("type"))) row.addView(text(bleRisk(e), 11, 0xffffcf80, false));
             if (e.has("security_advertisement")) row.addView(text(e.optString("security_advertisement") + "  •  " + e.optInt("frequency_mhz") + " MHz", 11, 0xffb6c4d4, false));
@@ -262,6 +272,52 @@ public class MainActivity extends Activity {
             if (e.has("service_uuids")) row.addView(text("Advertised services: " + e.optString("service_uuids"), 11, 0xffb6c4d4, false));
         }
         if (items.isEmpty()) results.addView(text("No observations yet. Select Wi-Fi or BLE scan above.", 14, 0xffb6c4d4, false));
+    }
+    private void showDeviceDetail(JSONObject e) {
+        String detail = "TYPE: " + e.optString("type") +
+            "\nNAME: " + e.optString("name") +
+            "\nIDENTIFIER: " + e.optString("identifier") +
+            "\nSIGNAL: " + e.optInt("rssi") + " dBm" +
+            "\nLAST OBSERVED: " + e.optString("timestamp") +
+            "\nADVERTISED SERVICES: " + e.optString("service_uuids","not observed") +
+            "\nSECURITY: " + e.optString("security_advertisement","unknown") +
+            "\nASSESSMENT: " + e.optString("assessment",bleRisk(e)) +
+            "\n\nThis observation does not establish device identity, firmware or exploitability.";
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("DEVICE INTELLIGENCE")
+            .setMessage(detail)
+            .setNegativeButton("Close",null)
+            .setPositiveButton("Advisory research",(d,w)->startActivity(new Intent(this,IntelligenceActivity.class)))
+            .show();
+    }
+    private void saveHistory() {
+        try {
+            JSONArray arr = new JSONArray();
+            for(JSONObject e:observations.values()) arr.put(e);
+            JSONObject snapshot = new JSONObject();
+            snapshot.put("saved_at",System.currentTimeMillis());
+            snapshot.put("observations",arr);
+            getPreferences(MODE_PRIVATE).edit().putString("last_snapshot",snapshot.toString()).apply();
+            updateStatus("Saved "+arr.length()+" observations locally; last snapshot replaces previous snapshot");
+        } catch(Exception ex) { updateStatus("Could not save snapshot"); }
+    }
+    private void loadHistory() {
+        // History is explicitly loaded via the inventory action to avoid stale devices appearing live.
+    }
+    private void loadSnapshot() {
+        try {
+            String data = getPreferences(MODE_PRIVATE).getString("last_snapshot","");
+            if(data.isEmpty()){updateStatus("No saved snapshot");return;}
+            JSONObject snap=new JSONObject(data);
+            JSONArray arr=snap.getJSONArray("observations");
+            observations.clear();
+            for(int i=0;i<arr.length();i++) {
+                JSONObject e=arr.getJSONObject(i);
+                observations.put(e.optString("type")+":"+e.optString("identifier"),e);
+            }
+            renderObservations();
+            updateStatus("Loaded saved snapshot (historical; not live radio observations)");
+        } catch(Exception ex) { updateStatus("Saved snapshot could not be read"); }
     }
     private String bleRisk(JSONObject e) {
         String name=e.optString("name","");
