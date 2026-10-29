@@ -76,10 +76,14 @@ public class AssessmentActivity extends Activity {
         ScrollView scroll = new ScrollView(this);
         scroll.addView(layout); setContentView(scroll);
         TextView heading = new TextView(this);
-        heading.setText("RF COMMAND CENTER • V2\nAuthorized BLE GATT Inspector");
+        heading.setText("RF COMMAND CENTER • V4\nAuthorized BLE GATT Inspector");
         heading.setTextSize(21); heading.setTextColor(0xff20ff80); layout.addView(heading);
         addButton(layout,"Scan BLE (10 seconds)", () -> startScan());
         addButton(layout,"Stop scan", () -> stopScan());
+        addButton(layout,"BLE security interpretation", () -> new android.app.AlertDialog.Builder(this)
+          .setTitle("Bluetooth vulnerability assessment")
+          .setMessage("Nearby advertisements, names, MAC addresses and RSSI cannot prove exploitability. For an owned or explicitly authorized device, confirm vendor/model/firmware, inspect GATT permissions, and correlate against official advisories. A successful GATT read is not automatically a vulnerability. No unauthorized connections or exploitation.")
+          .setPositiveButton("Understood",null).show());
         addButton(layout,"Export scan history", () -> export());
         addButton(layout,"Test first readable characteristic (owned device only)", () -> testRead());
         output = new TextView(this); output.setTextColor(Color.WHITE);
