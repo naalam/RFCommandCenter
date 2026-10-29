@@ -72,12 +72,12 @@ public class AssessmentActivity extends Activity {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(20,20,20,20);
-        layout.setBackgroundColor(0xff101923);
+        layout.setBackgroundColor(0xff020b08);
         ScrollView scroll = new ScrollView(this);
         scroll.addView(layout); setContentView(scroll);
         TextView heading = new TextView(this);
         heading.setText("RF COMMAND CENTER • V2\nAuthorized BLE GATT Inspector");
-        heading.setTextSize(21); heading.setTextColor(0xff37d3b5); layout.addView(heading);
+        heading.setTextSize(21); heading.setTextColor(0xff20ff80); layout.addView(heading);
         addButton(layout,"Scan BLE (10 seconds)", () -> startScan());
         addButton(layout,"Stop scan", () -> stopScan());
         addButton(layout,"Export scan history", () -> export());
