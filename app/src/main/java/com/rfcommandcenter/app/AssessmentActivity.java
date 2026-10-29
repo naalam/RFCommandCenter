@@ -40,7 +40,7 @@ public class AssessmentActivity extends Activity {
     };
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override public void onCharacteristicRead(BluetoothGatt g, BluetoothGattCharacteristic c, int status) {
-            runOnUiThread(() -> output.append("\\nAccess-control probe: "+c.getUuid()+" status="+status+" (0=read permitted; others may require authentication/encryption). No value saved."));
+            runOnUiThread(() -> output.append("\nAccess-control probe: "+c.getUuid()+" status="+status+" (0=read permitted; others may require authentication/encryption). No value saved."));
         }
         @Override public void onConnectionStateChange(BluetoothGatt g, int status, int state) {
             if (state == BluetoothProfile.STATE_CONNECTED) {
@@ -151,7 +151,7 @@ public class AssessmentActivity extends Activity {
         } catch(Exception e) {output.setText("GATT error: "+e.getMessage());}
     }
     private void testRead() {
-        if (!connected || gatt == null) {output.append("\\nConnect to an authorized BLE device first.");return;}
+        if (!connected || gatt == null) {output.append("\nConnect to an authorized BLE device first.");return;}
         new android.app.AlertDialog.Builder(this).setTitle("Read-only access check")
           .setMessage("Confirm this device is yours or explicitly in scope. This will attempt ONE GATT read and record only its status, not the returned value.")
           .setNegativeButton("Cancel",null).setPositiveButton("Test",(dialog,which)->{
@@ -159,12 +159,12 @@ public class AssessmentActivity extends Activity {
                   for(BluetoothGattService s:gatt.getServices()) for(BluetoothGattCharacteristic ch:s.getCharacteristics()) {
                       if((ch.getProperties() & BluetoothGattCharacteristic.PROPERTY_READ)!=0) {
                           boolean started=gatt.readCharacteristic(ch);
-                          output.append("\\nRead requested: "+ch.getUuid()+" started="+started);
+                          output.append("\nRead requested: "+ch.getUuid()+" started="+started);
                           return;
                       }
                   }
-                  output.append("\\nNo readable characteristic advertised.");
-              } catch(Exception ex) {output.append("\\nRead failed: "+ex.getClass().getSimpleName());}
+                  output.append("\nNo readable characteristic advertised.");
+              } catch(Exception ex) {output.append("\nRead failed: "+ex.getClass().getSimpleName());}
           }).show();
     }
     private void export() {
