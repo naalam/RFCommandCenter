@@ -98,9 +98,10 @@ public class MainActivity extends Activity {
         root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(20, 20, 20, 24);
         sc.addView(root); setContentView(sc);
         root.addView(text("◉ RF COMMAND CENTER", 24, accent, true));
-        root.addView(text("Local-only wireless & BLE discovery  •  v1.0", 13, 0xffafc4d3, false));
+        root.addView(text("Local-only wireless & BLE assessment  •  v2.0", 13, 0xffafc4d3, false));
         status = text("", 13, Color.WHITE, false); root.addView(status);
         stats = text("0 observations", 15, accent, true); root.addView(stats);
+        root.addView(button("Open V2 BLE GATT Inspector", v -> startActivity(new Intent(this, AssessmentActivity.class))));
         root.addView(button("1  Scan nearby Wi-Fi", v -> scanWifi()));
         root.addView(button("2  Start BLE scan (12 seconds)", v -> startBle()));
         root.addView(button("3  Stop BLE scan", v -> stopBle()));
@@ -141,6 +142,7 @@ public class MainActivity extends Activity {
                 e.put("name", scan.SSID == null || scan.SSID.isEmpty() ? "Hidden SSID" : scan.SSID);
                 e.put("rssi", scan.level); e.put("frequency_mhz", scan.frequency);
                 e.put("security_advertisement", scan.capabilities);
+                e.put("assessment", classifyWifi(scan.capabilities));
                 e.put("timestamp", dateFormat.format(new Date()));
                 observations.put("Wi-Fi:" + scan.BSSID, e);
             }
@@ -190,9 +192,19 @@ public class MainActivity extends Activity {
             row.addView(text(e.optString("type") + "  •  " + e.optString("name"), 15, Color.WHITE, true));
             row.addView(text(e.optString("identifier") + "   •   " + e.optInt("rssi") + " dBm", 12, accent, false));
             if (e.has("security_advertisement")) row.addView(text(e.optString("security_advertisement") + "  •  " + e.optInt("frequency_mhz") + " MHz", 11, 0xffb6c4d4, false));
+            if (e.has("assessment")) row.addView(text(e.optString("assessment"), 11, 0xffffd18c, false));
             if (e.has("service_uuids")) row.addView(text("Advertised services: " + e.optString("service_uuids"), 11, 0xffb6c4d4, false));
         }
         if (items.isEmpty()) results.addView(text("No observations yet. Select Wi-Fi or BLE scan above.", 14, 0xffb6c4d4, false));
+    }
+    private String classifyWifi(String caps) {
+        if (caps == null) return "Unknown security";
+        String s = caps.toUpperCase(Locale.US);
+        if (s.contains("WEP")) return "HIGH: WEP is obsolete; use WPA2-AES or WPA3";
+        if (!s.contains("WPA") && !s.contains("RSN") && !s.contains("SAE") && !s.contains("OWE")) return "REVIEW: Open network; verify intended guest access";
+        if (s.contains("WPA-PSK") && !s.contains("WPA2") && !s.contains("RSN")) return "HIGH: Legacy WPA advertised; migrate to WPA2/WPA3";
+        if (s.contains("SAE")) return "INFO: WPA3 SAE advertised";
+        return "INFO: Security advertised; not proof of secure configuration";
     }
     private void exportJson() {
         try {
