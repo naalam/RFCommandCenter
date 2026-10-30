@@ -11,7 +11,7 @@ import java.util.*;
 
 public class IntelligenceActivity extends Activity {
     private EditText manufacturer, model, firmware, reference;
-    private TextView output;
+    private TextView output, observed;
     private final ArrayList<JSONObject> records = new ArrayList<>();
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -22,8 +22,11 @@ public class IntelligenceActivity extends Activity {
         root.setBackgroundColor(0xff020b08);
         sc.addView(root);setContentView(sc);
         TextView title = new TextView(this);
-        title.setText("RF INTELLIGENCE / V5\nDevice identity and advisory research");
+        title.setText("RF INTELLIGENCE / V6.1\nDevice identity and advisory research");
         title.setTextSize(22);title.setTextColor(0xff20ff80);root.addView(title);
+        observed = new TextView(this);
+        observed.setTextColor(0xffa7e7bf);observed.setTextSize(13);
+        root.addView(observed);
         manufacturer = field(root,"Verified manufacturer (not guessed from BLE name)");
         model = field(root,"Verified product / model");
         firmware = field(root,"Firmware or software version (if known)");
@@ -35,8 +38,30 @@ public class IntelligenceActivity extends Activity {
         output = new TextView(this);
         output.setTextColor(Color.WHITE);output.setTextSize(14);
         root.addView(output);
-        load();showRecords();
+        load();showRecords();prefillObservation();
     }
+    private void prefillObservation() {
+        Intent source=getIntent();
+        if(!source.hasExtra("rf_type")) {
+            observed.setText("Select a Wi-Fi or BLE observation from the main dashboard to import scan metadata.");
+            return;
+        }
+        String type=source.getStringExtra("rf_type");
+        String name=source.getStringExtra("rf_name");
+        String id=source.getStringExtra("rf_identifier");
+        String security=source.getStringExtra("rf_security");
+        String services=source.getStringExtra("rf_services");
+        String time=source.getStringExtra("rf_timestamp");
+        observed.setText("IMPORTED SCAN EVIDENCE (UNVERIFIED IDENTITY)\n"+
+            "Radio: "+safe(type)+"\nObserved name / SSID: "+safe(name)+
+            "\nIdentifier / BSSID: "+safe(id)+"\nSecurity: "+safe(security)+
+            "\nAdvertised services: "+safe(services)+"\nObserved: "+safe(time)+
+            "\n\nManufacturer, product and firmware require independent verification.");
+        // Do not invent manufacturer/model/firmware or treat an SSID as a product model.
+        if(name!=null && !name.isEmpty() && !"Unnamed BLE device".equals(name) && !"Hidden SSID".equals(name))
+            model.setHint("Verify model (observed label: "+name+")");
+    }
+    private String safe(String s) {return s==null || s.isEmpty() ? "not observed" : s;}
     private EditText field(LinearLayout root,String hint) {
         EditText e = new EditText(this);e.setSingleLine(true);
         e.setTextColor(Color.WHITE);e.setHintTextColor(0xff8dbfa2);e.setHint(hint);
@@ -68,6 +93,12 @@ public class IntelligenceActivity extends Activity {
             r.put("manufacturer",maker);r.put("model",product);
             r.put("firmware",firmware.getText().toString().trim());
             r.put("reference",scope);r.put("timestamp",System.currentTimeMillis());
+            r.put("observed_type",getIntent().getStringExtra("rf_type"));
+            r.put("observed_name",getIntent().getStringExtra("rf_name"));
+            r.put("observed_identifier",getIntent().getStringExtra("rf_identifier"));
+            r.put("observed_security",getIntent().getStringExtra("rf_security"));
+            r.put("observed_services",getIntent().getStringExtra("rf_services"));
+            r.put("observed_timestamp",getIntent().getStringExtra("rf_timestamp"));
             r.put("status","IDENTITY RECORDED - CVE MATCH NOT VERIFIED");
             records.add(r);
             while(records.size()>150)records.remove(0);
