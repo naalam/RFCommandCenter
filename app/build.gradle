@@ -8,8 +8,8 @@ android {
         applicationId 'com.rfcommandcenter.app'
         minSdk 26
         targetSdk 33
-        versionCode 8
-        versionName '6.1.0'
+        versionCode 9
+        versionName '7.0.0'
     }
     buildTypes { release { minifyEnabled false } }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }

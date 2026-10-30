@@ -125,7 +125,7 @@ public class MainActivity extends Activity {
         sc.addView(root);
         setContentView(sc);
         root.addView(text("◉ RF COMMAND CENTER", 25, accent, true));
-        root.addView(text("MATRIX OPERATIONS  /  V6.1", 12, 0xffa1cdb5, false));
+        root.addView(text("MATRIX OPERATIONS  /  V7.0", 12, 0xffa1cdb5, false));
         status = text("", 13, Color.WHITE, false);
         root.addView(status);
         stats = text("Wi-Fi: 0  •  BLE: 0", 18, accent, true);
@@ -144,6 +144,7 @@ public class MainActivity extends Activity {
         LinearLayout tools = section("02 / SECURITY MODULES");
         tools.addView(button("SCOPED ASSESSMENT", v -> startActivity(new Intent(this, VulnerabilityActivity.class))));
         tools.addView(button("BLE GATT INSPECTOR", v -> startActivity(new Intent(this, AssessmentActivity.class))));
+        tools.addView(button("V7 OPERATIONS / EXECUTIVE REPORTS", v -> startActivity(new Intent(this, OperationsActivity.class))));
         tools.addView(button("V6 ENGAGEMENTS / FINDINGS / RETEST", v -> startActivity(new Intent(this, EngagementActivity.class))));
         tools.addView(button("V5 DEVICE IDENTITY + CVE RESEARCH", v -> startActivity(new Intent(this, IntelligenceActivity.class))));
 
