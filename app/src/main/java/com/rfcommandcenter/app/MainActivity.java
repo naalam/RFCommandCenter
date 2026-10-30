@@ -125,7 +125,7 @@ public class MainActivity extends Activity {
         sc.addView(root);
         setContentView(sc);
         root.addView(text("◉ RF COMMAND CENTER", 25, accent, true));
-        root.addView(text("MATRIX OPERATIONS  /  V6.0", 12, 0xffa1cdb5, false));
+        root.addView(text("MATRIX OPERATIONS  /  V6.1", 12, 0xffa1cdb5, false));
         status = text("", 13, Color.WHITE, false);
         root.addView(status);
         stats = text("Wi-Fi: 0  •  BLE: 0", 18, accent, true);
@@ -288,8 +288,18 @@ public class MainActivity extends Activity {
             .setTitle("DEVICE INTELLIGENCE")
             .setMessage(detail)
             .setNegativeButton("Close",null)
-            .setPositiveButton("Advisory research",(d,w)->startActivity(new Intent(this,IntelligenceActivity.class)))
+            .setPositiveButton("Advisory research",(d,w)->openIntelligence(e))
             .show();
+    }
+    private void openIntelligence(JSONObject e) {
+        Intent i=new Intent(this,IntelligenceActivity.class);
+        i.putExtra("rf_type",e.optString("type"));
+        i.putExtra("rf_name",e.optString("name"));
+        i.putExtra("rf_identifier",e.optString("identifier"));
+        i.putExtra("rf_security",e.optString("security_advertisement"));
+        i.putExtra("rf_services",e.optString("service_uuids"));
+        i.putExtra("rf_timestamp",e.optString("timestamp"));
+        startActivity(i);
     }
     private void saveHistory() {
         try {
