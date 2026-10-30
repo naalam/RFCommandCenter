@@ -84,6 +84,7 @@ public class AssessmentActivity extends Activity {
           .setTitle("Bluetooth vulnerability assessment")
           .setMessage("Nearby advertisements, names, MAC addresses and RSSI cannot prove exploitability. For an owned or explicitly authorized device, confirm vendor/model/firmware, inspect GATT permissions, and correlate against official advisories. A successful GATT read is not automatically a vulnerability. No unauthorized connections or exploitation.")
           .setPositiveButton("Understood",null).show());
+        addButton(layout,"Select BLE device for advisory research", () -> chooseResearchDevice());
         addButton(layout,"Export scan history", () -> export());
         addButton(layout,"Test first readable characteristic (owned device only)", () -> testRead());
         output = new TextView(this); output.setTextColor(Color.WHITE);
@@ -170,6 +171,26 @@ public class AssessmentActivity extends Activity {
                   output.append("\nNo readable characteristic advertised.");
               } catch(Exception ex) {output.append("\nRead failed: "+ex.getClass().getSimpleName());}
           }).show();
+    }
+    private void chooseResearchDevice() {
+        if(devices.isEmpty()){output.setText("Scan BLE first; no devices available.");return;}
+        String[] addresses=devices.keySet().toArray(new String[0]);
+        String[] labels=new String[addresses.length];
+        for(int n=0;n<addresses.length;n++){
+            JSONObject e=devices.get(addresses[n]);
+            labels[n]=e.optString("name","Unnamed BLE device")+"  "+addresses[n];
+        }
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("BLE advisory research (passive metadata)")
+            .setItems(labels,(dialog,which)->{
+                JSONObject e=devices.get(addresses[which]);
+                Intent i=new Intent(this,IntelligenceActivity.class);
+                i.putExtra("rf_type","BLE");
+                i.putExtra("rf_name",e.optString("name"));
+                i.putExtra("rf_identifier",e.optString("address"));
+                i.putExtra("rf_timestamp",String.valueOf(e.optLong("timestamp")));
+                startActivity(i);
+            }).show();
     }
     private void export() {
         JSONArray array=new JSONArray();
