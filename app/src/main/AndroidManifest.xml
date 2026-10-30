@@ -10,6 +10,7 @@
     <uses-feature android:name="android.hardware.wifi" android:required="false" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
     <application android:icon="@drawable/rf_launcher" android:label="RF Command Center" android:theme="@android:style/Theme.Material.NoActionBar" android:usesCleartextTraffic="false" android:allowBackup="false">
+      <activity android:name=".EngagementActivity" android:exported="false" />
       <activity android:name=".IntelligenceActivity" android:exported="false" />
       <activity android:name=".VulnerabilityActivity" android:exported="false" />
       <activity android:name=".AssessmentActivity" android:exported="false" />
